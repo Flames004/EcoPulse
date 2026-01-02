@@ -1,8 +1,7 @@
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 interface EmissionData {
   totalEmissions: number;
@@ -31,23 +30,10 @@ ${emissionData.topDevice ? `Most impactful device: ${emissionData.topDevice}` : 
 
 Provide recommendations as a numbered list (1-5) with each being concise and specific.`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an environmental consultant specializing in carbon footprint reduction.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      max_tokens: 500,
-      temperature: 0.7,
-    });
-
-    const content = response.choices[0].message.content || '';
+    const fullPrompt = `You are an environmental consultant specializing in carbon footprint reduction.\n\n${prompt}`;
+    
+    const response = await model.generateContent(fullPrompt);
+    const content = response.response.text() || '';
     
     // Parse the response into individual recommendations
     const recommendations = content
